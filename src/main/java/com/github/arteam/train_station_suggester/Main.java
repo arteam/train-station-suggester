@@ -5,7 +5,6 @@ import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.suggest.Lookup;
-import org.apache.lucene.search.suggest.analyzing.AnalyzingInfixSuggester;
 import org.apache.lucene.search.suggest.analyzing.BlendedInfixSuggester;
 import org.apache.lucene.store.MMapDirectory;
 import org.apache.lucene.util.BytesRef;
@@ -13,6 +12,7 @@ import org.apache.lucene.util.BytesRef;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
@@ -21,10 +21,12 @@ public class Main {
 
     public static final Path PATH = Path.of("/home/artem/Downloads/ts-index");
 
-    record TrainStation(long id, String name) {
+    public static void main(String[] args) throws Exception {
+        build();
+        suggest();
     }
 
-    public static void main(String[] args) throws Exception {
+    private static void suggest() throws IOException {
         try (var directory = MMapDirectory.open(PATH);
              var analyzer = new StandardAnalyzer();
              BlendedInfixSuggester suggester = new BlendedInfixSuggester(directory, analyzer);) {
@@ -46,12 +48,14 @@ public class Main {
     }
 
     private static void build() throws IOException {
+        if (Files.exists(PATH)) {
+            return;
+        }
         try (var is = Main.class.getResourceAsStream("/stations.csv");
              var reader = new InputStreamReader(Objects.requireNonNull(is), StandardCharsets.UTF_8);
              var csvParser = new CSVParser(reader, CSVFormat.Builder.create(CSVFormat.DEFAULT)
                      .setHeader()
                      .setSkipHeaderRecord(true)
-                     .setDelimiter(";")
                      .build());
              var directory = MMapDirectory.open(PATH);
              var analyzer = new StandardAnalyzer();
