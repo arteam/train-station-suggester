@@ -1,5 +1,6 @@
 package com.github.arteam.train_station_suggester;
 
+import io.dropwizard.lifecycle.Managed;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
@@ -14,7 +15,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Set;
 
-public class TrainStationIndexBuilder {
+public class TrainStationIndexBuilder implements Managed {
 
     private final Path path;
     private final AnalyzingInfixSuggester suggester;
@@ -24,8 +25,17 @@ public class TrainStationIndexBuilder {
         this.suggester = suggester;
     }
 
-    private void build() throws IOException {
-        if (Files.exists(path)) {
+    @Override
+    public void start() throws Exception {
+        build();
+    }
+
+    public boolean isIndexExists() {
+        return Files.exists(path);
+    }
+
+    public void build() throws IOException {
+        if (isIndexExists()) {
             return;
         }
         try (var is = getClass().getResourceAsStream("/stations.csv");

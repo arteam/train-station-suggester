@@ -18,8 +18,10 @@ public class TrainStationApplication extends Application<TrainStationConfigurati
         var fsDirectory = MMapDirectory.open(PATH);
         var analyzer = new StandardAnalyzer();
         var suggester = new BlendedInfixSuggester(fsDirectory, analyzer);
+        var trainStationIndexBuilder = new TrainStationIndexBuilder(PATH, suggester);
         environment.jersey().register(new TrainStationResource(new TrainStationSuggester(suggester)));
         environment.healthChecks().register("train-station", new TrainStationHealthCheck());
+        environment.lifecycle().manage(trainStationIndexBuilder);
         environment.lifecycle().manage(new AutoCloseableManager(fsDirectory));
         environment.lifecycle().manage(new AutoCloseableManager(analyzer));
         environment.lifecycle().manage(new AutoCloseableManager(suggester));
