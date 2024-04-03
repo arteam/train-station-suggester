@@ -20,7 +20,7 @@ public class TrainStationApplication extends Application<TrainStationConfigurati
         var suggester = new BlendedInfixSuggester(fsDirectory, analyzer);
         var trainStationIndexBuilder = new TrainStationIndexBuilder(PATH, suggester);
         environment.jersey().register(new TrainStationResource(new TrainStationSuggester(suggester)));
-        environment.healthChecks().register("train-station", new TrainStationHealthCheck());
+        environment.healthChecks().register("train-station", new TrainStationHealthCheck(PATH));
         environment.lifecycle().manage(trainStationIndexBuilder);
         environment.lifecycle().manage(new AutoCloseableManager(fsDirectory));
         environment.lifecycle().manage(new AutoCloseableManager(analyzer));
