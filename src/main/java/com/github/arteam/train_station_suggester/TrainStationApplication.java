@@ -7,20 +7,22 @@ import org.apache.lucene.analysis.standard.StandardAnalyzer;
 import org.apache.lucene.search.suggest.analyzing.BlendedInfixSuggester;
 import org.apache.lucene.store.MMapDirectory;
 
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 public class TrainStationApplication extends Application<TrainStationConfiguration> {
 
-    public static final Path PATH = Path.of("/home/artem/Downloads/ts-index");
 
     @Override
     public void run(TrainStationConfiguration trainStationConfiguration, Environment environment) throws Exception {
-        var fsDirectory = MMapDirectory.open(PATH);
+        Path path = Files.createTempDirectory("ts-index");
+
+        var fsDirectory = MMapDirectory.open(path);
         var analyzer = new StandardAnalyzer();
         var suggester = new BlendedInfixSuggester(fsDirectory, analyzer);
-        var trainStationIndexBuilder = new TrainStationIndexBuilder(PATH, suggester);
+        var trainStationIndexBuilder = new TrainStationIndexBuilder(path, suggester);
         environment.jersey().register(new TrainStationResource(new TrainStationSuggester(suggester)));
-        environment.healthChecks().register("train-station", new TrainStationHealthCheck(PATH));
+        environment.healthChecks().register("train-station", new TrainStationHealthCheck(path));
         environment.lifecycle().manage(trainStationIndexBuilder);
         environment.lifecycle().manage(new AutoCloseableManager(fsDirectory));
         environment.lifecycle().manage(new AutoCloseableManager(analyzer));
